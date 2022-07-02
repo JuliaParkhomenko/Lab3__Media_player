@@ -1,12 +1,21 @@
 package ua.nure.parkhomenko.lab3;
 //  https://code.tutsplus.com/ru/tutorials/create-a-music-player-on-android-project-setup--mobile-22764
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,9 +28,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        init();
+        checkedPermission();
+
+
+    }
+    private void init(){
         songView = (ListView)findViewById(R.id.song_list);
         songList = new ArrayList<Song>();
-        getSongList();
+        songList=new SongsDBHandler(getApplicationContext(), getContentResolver()).populateNoteListArray();
 
         // sorting songList by title
         Collections.sort(songList, new Comparator<Song>(){
@@ -34,28 +49,29 @@ public class MainActivity extends AppCompatActivity {
         songView.setAdapter(songAdapter);
     }
 
-    public void getSongList() {
-        //retrieve song info
-        ContentResolver musicResolver = getContentResolver();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;    //"/storage/emulated/0/Music/Telegram/"
-        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
+    /**
+     * Function to ask user to grant the permission.
+     */
 
-        if(musicCursor!=null && musicCursor.moveToFirst()){
-            //get columns
-            int titleColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.TITLE);
-            int idColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media._ID);
-            int artistColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.ARTIST);
-            //add songs to list
-            do {
-                long id = musicCursor.getLong(idColumn);
-                String title = musicCursor.getString(titleColumn);
-                String artist = musicCursor.getString(artistColumn);
-                songList.add(new Song(id, title, artist));
+    private void checkedPermission() {
+        LinearLayout linearLayout = findViewById(R.id.linearLayout);
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
+            } else {
+                if (ContextCompat.checkSelfPermission(MainActivity.this,
+                        Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    Snackbar snackbar = Snackbar.make(linearLayout, "Provide the Storage Permission", Snackbar.LENGTH_LONG);
+                    snackbar.show();
+                }
             }
-            while (musicCursor.moveToNext());
         }
     }
+
+
 }

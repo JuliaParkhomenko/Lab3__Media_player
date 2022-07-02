@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ua.nure.parkhomenko.lab3">
+    // добавила это разрешение, чтобы воспроизведение музыки продолжалось, когда устройство не работает.
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:allowBackup="true"
@@ -9,7 +10,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Lab3">
-        <activity android:launchMode="singleTop"
+
+        // launchMode поможет процессу перехода к приложению после его удаления. Мы отобразим уведомление о текущей песне, нажатие на уведомление вернёт пользователя в приложение.
+        <activity
+            android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:name=".MainActivity">
             <intent-filter>

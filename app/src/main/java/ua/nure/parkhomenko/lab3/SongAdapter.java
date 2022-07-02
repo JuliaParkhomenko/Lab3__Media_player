@@ -39,18 +39,18 @@ public class SongAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View view, ViewGroup viewGroup) {
         //map to song layout
-        ConstraintLayout songLay = (ConstraintLayout) inflater.inflate
+        ConstraintLayout songLayout = (ConstraintLayout) inflater.inflate
                 (R.layout.song_view, viewGroup, false);
         //get title and artist views
-        TextView songView = (TextView)songLay.findViewById(R.id.song_title);
-        TextView artistView = (TextView)songLay.findViewById(R.id.song_artist);
+        TextView songView = (TextView)songLayout.findViewById(R.id.song_title);
+        TextView artistView = (TextView)songLayout.findViewById(R.id.song_artist);
         //get song using position
         Song currSong = songs.get(position);
         //get title and artist strings
         songView.setText(currSong.getTitle());
         artistView.setText(currSong.getArtist());
         //set position as tag
-        songLay.setTag(position);
-        return songLay;
+        songLayout.setTag(position);
+        return songLayout;
     }
 }
