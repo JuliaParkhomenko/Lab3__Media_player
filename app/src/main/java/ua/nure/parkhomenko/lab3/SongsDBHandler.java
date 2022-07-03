@@ -20,7 +20,7 @@ public class SongsDBHandler extends SQLiteOpenHelper {
     public static final String COLUMN_ID             = "songID";
     public static final String COLUMN_TITLE          = "title";
     public static final String COLUMN_ARTIST       = "artist";
-    public static final String COLUMN_PATH           = "songPath";
+    //public static final String COLUMN_PATH           = "songPath";
 
     public SongsDBHandler(Context context, ContentResolver contentResolver) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -31,7 +31,7 @@ public class SongsDBHandler extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE " + TABLE_SONGS + " (" + COLUMN_ID
                 + " INTEGER, " + COLUMN_TITLE + " TEXT, " + COLUMN_ARTIST
-                + " TEXT, " + COLUMN_PATH + " TEXT PRIMARY KEY " + ")");
+                + /*" TEXT, " + COLUMN_PATH +*/ " TEXT PRIMARY KEY " + ")");
         ArrayList<Song> songList = getSongsList();
         insertSongsToDB(db, songList);
     }
@@ -44,7 +44,7 @@ public class SongsDBHandler extends SQLiteOpenHelper {
             contentValues.put(COLUMN_ID, song.getId());
             contentValues.put(COLUMN_TITLE, song.getTitle());
             contentValues.put(COLUMN_ARTIST, song.getArtist());
-            contentValues.put(COLUMN_PATH, song.getPath());
+            //contentValues.put(COLUMN_PATH, song.getPath());
 
             db.insert(TABLE_SONGS, null, contentValues);
         }
@@ -55,7 +55,7 @@ public class SongsDBHandler extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_SONGS);
         db.execSQL("CREATE TABLE " + TABLE_SONGS + " (" + COLUMN_ID
                 + " INTEGER, " + COLUMN_TITLE + " TEXT, " + COLUMN_ARTIST
-                + " TEXT, " + COLUMN_PATH + " TEXT PRIMARY KEY " + ")");
+                + /*" TEXT, " + COLUMN_PATH + */" TEXT PRIMARY KEY " + ")");
     }
 
     public ArrayList<Song> getSongsList() {
@@ -73,15 +73,15 @@ public class SongsDBHandler extends SQLiteOpenHelper {
                     (android.provider.MediaStore.Audio.Media._ID);
             int artistColumn = songCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media.ARTIST);
-            int pathColumn = songCursor.getColumnIndex
-                    (MediaStore.Audio.Media.DATA);
+            /*int pathColumn = songCursor.getColumnIndex
+                    (MediaStore.Audio.Media.DATA);*/
             //add songs to list
             do {
                 long id = songCursor.getLong(idColumn);
                 String title = songCursor.getString(titleColumn);
                 String artist = songCursor.getString(artistColumn);
-                String path = songCursor.getString(pathColumn);
-                songList.add(new Song(id, title, artist, path));
+                /*String path = songCursor.getString(pathColumn);*/
+                songList.add(new Song(id, title, artist/*, path*/));
             }
             while (songCursor.moveToNext());
             songCursor.close();
@@ -99,8 +99,8 @@ public class SongsDBHandler extends SQLiteOpenHelper {
                 int id = result.getInt(0);
                 String title = result.getString(1);
                 String artist = result.getString(2);
-                String path = result.getString(3);
-                song = new Song(id, title, artist, path);
+                /*String path = result.getString(3);*/
+                song = new Song(id, title, artist/*, path*/);
                 songs.add(song);
             }
         }

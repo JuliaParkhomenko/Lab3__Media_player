@@ -20,18 +20,28 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import android.os.IBinder;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.view.MenuItem;
+import android.view.View;
+import ua.nure.parkhomenko.lab3.MusicService.MusicBinder;
 
 public class MainActivity extends AppCompatActivity {
     private ArrayList<Song> songList;
     private ListView songView;
+    private MusicService musicService;
+    private Intent playIntent;
+    private boolean musicBound=false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init();
         checkedPermission();
-
-
     }
     private void init(){
         songView = (ListView)findViewById(R.id.song_list);
@@ -48,6 +58,25 @@ public class MainActivity extends AppCompatActivity {
         SongAdapter songAdapter = new SongAdapter(this, songList);
         songView.setAdapter(songAdapter);
     }
+
+    //connect to the service
+    private ServiceConnection musicConnection = new ServiceConnection(){
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicBinder binder = (MusicBinder)service;
+            //get service
+            musicService = binder.getService();
+            //pass list
+            musicService.setList(songList);
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
 
     /**
      * Function to ask user to grant the permission.
@@ -73,5 +102,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(playIntent==null){
+            playIntent = new Intent(this, MusicService.class);
+            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
+        }
+    }
 
+    public void songPicked(View view){
+        musicService.setSong(Integer.parseInt(view.getTag().toString()));
+        musicService.playSong();
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopService(playIntent);
+        musicService=null;
+        super.onDestroy();
+    }
 }
