@@ -5,13 +5,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
@@ -22,7 +20,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import android.os.IBinder;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.view.MenuItem;
@@ -38,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private MusicController controller;
     private boolean musicBound=false;
     private boolean paused=false, playbackPaused=false;
+    private Menu menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -252,5 +250,48 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     protected void onStop() {
         controller.hide();
         super.onStop();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        this.menu=menu;
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        MenuItem shuffleItem = menu.findItem(R.id.action_shuffle);//findViewById(R.id.action_shuffle);
+        MenuItem repeatItem = menu.findItem(R.id.action_repeat);//findViewById(R.id.action_repeat);
+        //menu item selected
+
+        switch (item.getItemId()) {
+            case R.id.action_shuffle:
+                musicService.setShuffle();
+                if(musicService.isOnShuffle()){
+                    if(musicService.isOnRepeat()){
+                        musicService.setRepeat();
+                        repeatItem.setIcon(R.drawable.song_repeat_off);
+                    }
+                    item.setIcon(R.drawable.song_random_on);
+                }else {
+                    item.setIcon(R.drawable.song_random_off);
+                }
+                break;
+            case R.id.action_repeat:
+                musicService.setRepeat();
+                if(musicService.isOnRepeat()){
+                    if(musicService.isOnShuffle()){
+                        musicService.setShuffle();
+                        shuffleItem.setIcon(R.drawable.song_random_off);
+                    }
+                    item.setIcon(R.drawable.song_repeat_on);
+                }else {
+                    item.setIcon(R.drawable.song_repeat_off);
+                }
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

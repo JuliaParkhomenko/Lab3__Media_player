@@ -36,6 +36,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private String songAuthor="";
     private static final int NOTIFY_ID=1;
 
+    private boolean shuffle=false;
+    private Random rand;
+    private boolean repeat=false;
+
     NotificationManagerCompat notificationManagerCompat;
     Notification notification;
 
@@ -47,6 +51,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         songPosition=0;
         //create player
         player = new MediaPlayer();
+        rand=new Random();
         initMusicPlayer();
     }
 
@@ -85,10 +90,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        if(player.getCurrentPosition()==0){
+        //if(player.getCurrentPosition()==0){
             mp.reset();
             playNext();
-        }
+        //}
     }
 
     @Override
@@ -107,16 +112,23 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         /*Notification.Builder builder = new Notification.Builder(this);
+*/
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            NotificationChannel channel = new NotificationChannel("songChannel", "MyChannel", NotificationManager.IMPORTANCE_DEFAULT);
 
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "songChannel");
         builder.setContentIntent(pendInt)
-                .setSmallIcon(R.drawable.song_play)
+        .setSmallIcon(R.drawable.music)
+                .setContentTitle(songTitle)
+                .setContentText(songAuthor)
                 .setTicker(songTitle)
-                .setOngoing(true)
-                .setContentTitle("Playing")
-                .setContentText(songTitle);
+                .setOngoing(true);
         Notification not = builder.build();
 
-        startForeground(NOTIFY_ID, not);*/
+        startForeground(NOTIFY_ID, not);
 
         //work but i need something different
         /*if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
@@ -197,9 +209,37 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     //skip to next
     public void playNext(){
-        songPosition++;
-        if(songPosition==songsList.size()) songPosition=0;
+        if(shuffle){
+            int newSong = songPosition;
+            while(newSong==songPosition){
+                newSong=rand.nextInt(songsList.size());
+            }
+            songPosition=newSong;
+        }
+        else if(!repeat){
+            songPosition++;
+            if(songPosition==songsList.size()) songPosition=0;
+        }
+
         playSong();
+    }
+
+    public void setShuffle(){
+        if(shuffle) shuffle=false;
+        else shuffle=true;
+    }
+
+    public void setRepeat(){
+        if(repeat) repeat=false;
+        else repeat=true;
+    }
+
+    public boolean isOnRepeat(){
+        return repeat;
+    }
+
+    public boolean isOnShuffle(){
+        return shuffle;
     }
 
     @Override
