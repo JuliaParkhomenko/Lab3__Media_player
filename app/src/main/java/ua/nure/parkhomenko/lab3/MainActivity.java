@@ -27,14 +27,17 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.MediaController.MediaPlayerControl;
 import ua.nure.parkhomenko.lab3.MusicService.MusicBinder;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MediaPlayerControl {
     private ArrayList<Song> songList;
     private ListView songView;
     private MusicService musicService;
     private Intent playIntent;
+    private MusicController controller;
     private boolean musicBound=false;
+    private boolean paused=false, playbackPaused=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         init();
         checkedPermission();
+        setController();
     }
     private void init(){
         songView = (ListView)findViewById(R.id.song_list);
@@ -115,6 +119,11 @@ public class MainActivity extends AppCompatActivity {
     public void songPicked(View view){
         musicService.setSong(Integer.parseInt(view.getTag().toString()));
         musicService.playSong();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
     }
 
     @Override
@@ -122,5 +131,126 @@ public class MainActivity extends AppCompatActivity {
         stopService(playIntent);
         musicService=null;
         super.onDestroy();
+    }
+
+    @Override
+    public void pause() {
+        playbackPaused=true;
+        musicService.pausePlayer();
+    }
+
+    @Override
+    public void seekTo(int pos) {
+        musicService.seek(pos);
+    }
+
+    @Override
+    public void start() {
+        musicService.go();
+    }
+
+    @Override
+    public int getDuration() {
+        if(musicService!=null && musicBound && musicService.isPlaying())
+        return musicService.getDuration();
+  else return 0;
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        if(musicService!=null && musicBound && musicService.isPlaying())
+        return musicService.getPosition();
+  else return 0;
+    }
+
+    @Override
+    public boolean isPlaying() {
+        if(musicService!=null && musicBound)
+        return musicService.isPlaying();
+        return false;
+    }
+
+    @Override
+    public int getBufferPercentage() {
+        return 0;
+    }
+
+    @Override
+    public boolean canPause() {
+        return true;
+    }
+
+    @Override
+    public boolean canSeekBackward() {
+        return true;
+    }
+
+    @Override
+    public boolean canSeekForward() {
+        return true;
+    }
+
+    @Override
+    public int getAudioSessionId() {
+        return 0;
+    }
+
+    private void setController(){
+        //set the controller up
+        controller = new MusicController(this);
+        controller.setPrevNextListeners(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playNext();
+            }
+        }, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playPrev();
+            }
+        });
+        controller.setMediaPlayer(this);
+        controller.setAnchorView(findViewById(R.id.song_list));
+        controller.setEnabled(true);
+    }
+    //play next
+    private void playNext(){
+        musicService.playNext();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
+    }
+
+    //play previous
+    private void playPrev(){
+        musicService.playPrev();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        paused=true;
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if(paused){
+            setController();
+            paused=false;
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        controller.hide();
+        super.onStop();
     }
 }

@@ -30,8 +30,8 @@ public class SongsDBHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE " + TABLE_SONGS + " (" + COLUMN_ID
-                + " INTEGER, " + COLUMN_TITLE + " TEXT, " + COLUMN_ARTIST
-                + /*" TEXT, " + COLUMN_PATH +*/ " TEXT PRIMARY KEY " + ")");
+                + " INTEGER PRIMARY KEY, " + COLUMN_TITLE + " TEXT, " + COLUMN_ARTIST
+                + /*" TEXT, " + COLUMN_PATH +*/ " TEXT " + ")");
         ArrayList<Song> songList = getSongsList();
         insertSongsToDB(db, songList);
     }
@@ -61,9 +61,9 @@ public class SongsDBHandler extends SQLiteOpenHelper {
     public ArrayList<Song> getSongsList() {
         //retrieve song info
         ArrayList<Song> songList = new ArrayList<>();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;    //"/storage/emulated/0/Music/Telegram/"
-        String sortOrder = MediaStore.Audio.Media.DATE_MODIFIED + " ASC";
-        Cursor songCursor = contentResolver.query(musicUri, null, null, null, sortOrder);
+        Uri musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;    //"/storage/emulated/0/Music/Telegram/"
+        //String sortOrder = MediaStore.Audio.Media.DATE_MODIFIED + " ASC";
+        Cursor songCursor = contentResolver.query(musicUri, null, null, null, null/*sortOrder*/);
 
         if (songCursor != null && songCursor.moveToFirst()) {
             //get columns
