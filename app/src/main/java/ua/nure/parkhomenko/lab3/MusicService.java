@@ -3,6 +3,7 @@ package ua.nure.parkhomenko.lab3;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -14,6 +15,8 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.PowerManager;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import java.util.Random;
 import android.app.Notification;
@@ -40,6 +43,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private Random rand;
     private boolean repeat=false;
 
+    //Used to pause/resume MediaPlayer
+    private int resumePosition;
+
+    //Handle incoming phone calls
+    private boolean ongoingCall = false;
+    private PhoneStateListener phoneStateListener;
+    private TelephonyManager telephonyManager;
+
     NotificationManagerCompat notificationManagerCompat;
     Notification notification;
 
@@ -47,6 +58,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public void onCreate(){
         //create the service
         super.onCreate();
+        // Manage incoming phone calls during playback.
+        // Pause MediaPlayer on incoming call,
+        // Resume on hangup.
+        callStateListener();
         //initialize position
         songPosition=0;
         //create player
@@ -191,7 +206,18 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void pausePlayer(){
-        player.pause();
+        if (player.isPlaying()) {
+            player.pause();
+            resumePosition = player.getCurrentPosition();
+            player.seekTo(resumePosition);
+        }
+    }
+
+    private void resumePlayer() {
+        if (!player.isPlaying()) {
+            player.seekTo(resumePosition);
+            player.start();
+        }
     }
 
     public void seek(int posn){
@@ -240,6 +266,44 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     public boolean isOnShuffle(){
         return shuffle;
+    }
+
+    /**
+     * Handle PhoneState changes
+     */
+    private void callStateListener() {
+        // Get the telephony manager
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        //Starting listening for PhoneState changes
+        phoneStateListener = new PhoneStateListener() {
+            @Override
+            public void onCallStateChanged(int state, String incomingNumber) {
+                switch (state) {
+                    //if at least one call exists or the phone is ringing
+                    //pause the MediaPlayer
+                    case TelephonyManager.CALL_STATE_OFFHOOK:
+                    case TelephonyManager.CALL_STATE_RINGING:
+                        if (player != null) {
+                            pausePlayer();
+                            ongoingCall = true;
+                        }
+                        break;
+                    case TelephonyManager.CALL_STATE_IDLE:
+                        // Phone idle. Start playing.
+                        if (player != null) {
+                            if (ongoingCall) {
+                                ongoingCall = false;
+                                resumePlayer();
+                            }
+                        }
+                        break;
+                }
+            }
+        };
+        // Register the listener with the telephony manager
+        // Listen for changes to the device call state.
+        telephonyManager.listen(phoneStateListener,
+                PhoneStateListener.LISTEN_CALL_STATE);
     }
 
     @Override

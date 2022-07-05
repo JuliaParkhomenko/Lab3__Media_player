@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     public void pause() {
         playbackPaused=true;
         musicService.pausePlayer();
+        //musicService.seekTo(resumePosition);
     }
 
     @Override
